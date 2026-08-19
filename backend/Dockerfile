@@ -17,6 +17,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Build the RAG vector database at image build time, since chroma_db/
+# is gitignored (correctly, for local dev) and nothing else creates it
+# inside the deployed container.
+RUN python rag/ingest.py
+
 # Render sets $PORT at runtime; default to 8000 for local docker runs
 ENV PORT=8000
 EXPOSE 8000
