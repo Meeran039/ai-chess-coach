@@ -6,7 +6,8 @@ import io
 from dotenv import load_dotenv
 
 load_dotenv()
-STOCKFISH_PATH = os.getenv("STOCKFISH_PATH")
+from stockfish_utils import get_stockfish_path
+STOCKFISH_PATH = get_stockfish_path()
 
 MATE_SCORE_CAP = 1000  # cap mate scores so they don't distort math
 

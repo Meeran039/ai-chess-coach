@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-STOCKFISH_PATH = os.getenv("STOCKFISH_PATH")
+from stockfish_utils import get_stockfish_path
+STOCKFISH_PATH = get_stockfish_path()
 
 
 def get_best_move(fen, depth=12):
