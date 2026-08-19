@@ -1,6 +1,9 @@
 venv/
-.env
-__pycache__/
+backend/.env
+backend/__pycache__/
 chroma_db/
 *.pyc
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
 .vscode/
