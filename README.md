@@ -12,10 +12,6 @@ Built as a hands-on project to explore four core AI engineering concepts: RAG, M
 4. For any blunder, an LLM coach explains what went wrong, using a knowledge base of chess opening theory and tactical patterns for grounding (RAG), so the explanation is based on real chess concepts instead of the model guessing
 5. You can quiz yourself on that exact position, type your answer, and get graded against Stockfish's actual best move
 
-## Why this project
-
-Most AI portfolio projects either use synthetic examples or stop at "chat with a PDF." This one is built around a domain (chess) with objective ground truth, so the AI's output can actually be checked for correctness, not just fluency. That objectivity is also what makes the eval suite meaningful, since Stockfish gives a deterministic, verifiable answer for what the LLM should be explaining.
-
 ## Architecture
 
 ```
@@ -31,7 +27,7 @@ Backend (FastAPI, deployed on Render)
         +--> MCP server (FastMCP)         (exposes tools to any MCP-compatible client)
 ```
 
-## The four core concepts, applied
+## The four core concepts, Applied
 
 **RAG (Retrieval-Augmented Generation)**
 The coaching explanations are grounded in a small knowledge base of opening theory and tactical patterns (`backend/rag/opening_theory.md`), embedded and stored in ChromaDB. When a blunder is found, the relevant theory is retrieved and passed into the LLM's prompt, so explanations reference real chess concepts (forks, pins, king safety, tempo) instead of the model inventing plausible-sounding but ungrounded reasoning.
@@ -63,32 +59,6 @@ This eval suite already caught two real bugs during development: a malformed PGN
 - **Testing**: pytest
 - **Data source**: Chess.com public API
 
-## Project structure
-
-```
-ai-chess-coach/
-    backend/
-        agents/
-            coach.py          RAG-grounded coaching explanations
-            quiz.py            Quiz generation and grading
-        analysis/
-            blunder_finder.py  Stockfish-based blunder detection
-        rag/
-            ingest.py          Chunks and embeds opening theory into ChromaDB
-            retriever.py       Retrieves relevant theory chunks for a query
-            opening_theory.md  The knowledge base itself
-        mcp_server/
-            lichess_server.py  MCP server exposing coaching tools (Chess.com API)
-        evals/
-            test_explanation_accuracy.py
-        api.py                 FastAPI app, REST endpoints for the frontend
-        requirements.txt
-    frontend/
-        app/
-            page.tsx           Main UI
-            ChessBoard.tsx     Renders a FEN position as a visual board with move highlighting
-        package.json
-```
 
 ## Running it locally
 
