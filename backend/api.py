@@ -34,7 +34,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://*.vercel.app",  # replace with your exact Vercel domain in prod
+        "https://ai-chess-coach-meeran.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
