@@ -6,17 +6,21 @@ import io
 from dotenv import load_dotenv
 
 load_dotenv()
-from stockfish_utils import get_stockfish_path
-STOCKFISH_PATH = get_stockfish_path()
+STOCKFISH_PATH = os.getenv("STOCKFISH_PATH")
 
 MATE_SCORE_CAP = 1000  # cap mate scores so they don't distort math
+
+# Speed vs accuracy tradeoff for Stockfish analysis.
+# depth=12 (the old value) is noticeably slower on Render's free-tier CPU.
+# depth=8 is still plenty strong to catch real blunders (300+ cp swings),
+# since a genuine blunder is usually obvious even at shallow depth.
+ANALYSIS_DEPTH = 8
 
 def get_score(info):
     """Extract a usable centipawn score, capping mate scores instead of using huge numbers."""
     score = info["score"].relative
     if score.is_mate():
         mate_in = score.mate()
-        # Positive mate_in = good for the side to move, negative = bad
         return MATE_SCORE_CAP if mate_in > 0 else -MATE_SCORE_CAP
     return score.score()
 
@@ -34,18 +38,27 @@ def analyze_game(pgn_text, player_username, blunder_threshold=200):
     blunders = []
     engine = chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH)
 
+    # Limit Stockfish to a single thread and small hash table. On Render's
+    # free tier (shared, limited CPU/RAM), letting Stockfish assume it has
+    # more resources than it actually gets can slow things down rather than
+    # speed them up.
+    try:
+        engine.configure({"Threads": 1, "Hash": 16})
+    except Exception:
+        pass  # some engine builds don't expose these options, safe to skip
+
     try:
         for ply, move in enumerate(game.mainline_moves(), 1):
             mover_is_white = board.turn == chess.WHITE
             mover_name = white_player if mover_is_white else black_player
 
-            info_before = engine.analyse(board, chess.engine.Limit(depth=12))
+            info_before = engine.analyse(board, chess.engine.Limit(depth=ANALYSIS_DEPTH))
             score_before = get_score(info_before)
 
             move_san = board.san(move)
             board.push(move)
 
-            info_after = engine.analyse(board, chess.engine.Limit(depth=12))
+            info_after = engine.analyse(board, chess.engine.Limit(depth=ANALYSIS_DEPTH))
             score_after = -get_score(info_after)  # flip to same player's perspective
 
             if score_before is not None and score_after is not None:
@@ -67,12 +80,13 @@ def analyze_game(pgn_text, player_username, blunder_threshold=200):
 
 
 if __name__ == "__main__":
-    sample_pgn = """
-    [Event "Test"]
-    [White "TestWhite"]
-    [Black "TestBlack"]
-    1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7#
-    """
+    sample_pgn = (
+        '[Event "Test"]\n'
+        '[White "TestWhite"]\n'
+        '[Black "TestBlack"]\n'
+        "\n"
+        "1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7#\n"
+    )
     results = analyze_game(sample_pgn, player_username="TestBlack", blunder_threshold=200)
     print(f"Found {len(results)} blunders\n")
     for b in results:
